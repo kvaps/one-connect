@@ -61,5 +61,44 @@ select_vm() {
     SELECTED_VM=`zenity --list --title='Choose vm' --column="ID" --column="NAME" ${VMLIST[@]}`
 }
 
+get_vminfo() {
+    SSH_ERR_FILE=$(mktemp)
+    if [ "$SSH_USER" != "" ] ; then
+        SSH_CMD="${SSH_USER}@${SSH_HOST}"
+    else
+        SSH_CMD="${SSH_HOST}"
+    fi
+    VMINFO=`ssh -oBatchMode=yes ${SSH_CMD} "onevm show $SELECTED_VM --xml" 2> $SSH_ERR_FILE`
+    SSH_ERROR=`cat $SSH_ERR_FILE`
+    if [ "$SSH_ERROR" != "" ] ; then error "SSH Connection failure:\n$SSH_ERROR"; exit 1 ; fi
+    rm -f $SSH_ERR_FILE
+}
+
+connect_vm() {
+    select_vm
+    get_vminfo
+    HOST=`echo $VMINFO | grep -Po '(?<=\<HOSTNAME\>)[0-9a-zA-Z-]*(?=\</HOSTNAME\>)' | head -n1`
+    PORT=`echo $VMINFO | grep -Po '(?<=\<PORT\>\<!\[CDATA\[)[0-9]*(?=\]\]\>\</PORT\>)' | head -n1`
+    PASSWD=`echo $VMINFO | grep -Po '(?<=\<PASSWD\>\<!\[CDATA\[)[0-9a-zA-Z-]*(?=\]\]\>\</PASSWD\>)' | head -n1`
+    echo $VMINFO
+    echo HOST: $HOST PORT:  $PORT PASSWD:  $PASSWD
+
+    VV_FILE=$(mktemp)
+    cat > $VV_FILE <<EOF
+[virt-viewer]
+type=spice
+host=$HOST
+port=$PORT
+password=$PASSWD
+delete-this-file=1
+fullscreen=0
+title=win7x86_2:%d
+toggle-fullscreen=shift+f11
+release-cursor=shift+f12
+secure-attention=ctrl+alt+end
+EOF
+
+    remote-viewer $VV_FILE
+}
 loadkeys $@
-select_vm
+connect_vm
