@@ -25,7 +25,7 @@ loadkeys() {
     HELP=
     SSH_HOST=
     SSH_USER=
-    LOG_FILE=vm-connect.log
+    LOG_FILE=
     
     while true; do
       case "$1" in
@@ -44,7 +44,12 @@ loadkeys() {
 
 get_vmlist() {
     SSH_ERR_FILE=$(mktemp)
-    VMLIST=`ssh -oBatchMode=yes $SSH_USER@$SSH_HOST 'onevm list -l ID,NAME --csv' 2> $SSH_ERR_FILE | sed 1d | tr ',' '\n'`
+    if [ "$SSH_USER" != "" ] ; then
+        SSH_CMD="${SSH_USER}@${SSH_HOST}"
+    else
+        SSH_CMD="${SSH_HOST}"
+    fi
+    VMLIST=`ssh -oBatchMode=yes ${SSH_CMD} 'onevm list -l ID,NAME --csv' 2> $SSH_ERR_FILE | sed 1d | tr ',' '\n'`
     SSH_ERROR=`cat $SSH_ERR_FILE`
     if [ "$SSH_ERROR" != "" ] ; then error "SSH Connection failure:\n$SSH_ERROR"; exit 1 ; fi
     rm -f $SSH_ERR_FILE
