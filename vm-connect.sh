@@ -42,21 +42,6 @@ loadkeys() {
     if [ "$SSH_HOST" == "" ] ; then error "Host address is not set" break; exit 1; fi
 }
 
-## Ask login password
-#ENTRY=`zenity --password --username`
-#
-#case $? in
-#         0)
-#	 	ONE_USER=`echo $ENTRY | cut -d'|' -f1`
-#	 	ONE_PASS=`echo $ENTRY | cut -d'|' -f2`
-#		;;
-#         1)
-#                echo "Stop login.";;
-#        -1)
-#                zenity --error
-#esac
-
-
 get_vmlist() {
     SSH_ERR_FILE=$(mktemp)
     VMLIST=`ssh -oBatchMode=yes $SSH_USER@$SSH_HOST 'onevm list -l ID,NAME --csv' 2> $SSH_ERR_FILE | sed 1d | tr ',' '\n'`
