@@ -61,6 +61,32 @@ select_vm() {
     SELECTED_VM=`zenity --list --title='Choose vm' --column="ID" --column="NAME" ${VMLIST[@]}`
 }
 
+start_vm() {
+    SSH_ERR_FILE=$(mktemp)
+    if [ "$SSH_USER" != "" ] ; then
+        SSH_CMD="${SSH_USER}@${SSH_HOST}"
+    else
+        SSH_CMD="${SSH_HOST}"
+    fi
+    ssh -oBatchMode=yes ${SSH_CMD} "onevm resume $SELECTED_VM " 2> $SSH_ERR_FILE
+    SSH_ERROR=`cat $SSH_ERR_FILE`
+    if [ "$SSH_ERROR" != "" ] ; then error "SSH Connection failure:\n$SSH_ERROR"; exit 1 ; fi
+    rm -f $SSH_ERR_FILE
+}
+
+stop_vm() {
+    SSH_ERR_FILE=$(mktemp)
+    if [ "$SSH_USER" != "" ] ; then
+        SSH_CMD="${SSH_USER}@${SSH_HOST}"
+    else
+        SSH_CMD="${SSH_HOST}"
+    fi
+    ssh -oBatchMode=yes ${SSH_CMD} "onevm poweroff $SELECTED_VM " 2> $SSH_ERR_FILE
+    SSH_ERROR=`cat $SSH_ERR_FILE`
+    if [ "$SSH_ERROR" != "" ] ; then error "SSH Connection failure:\n$SSH_ERROR"; exit 1 ; fi
+    rm -f $SSH_ERR_FILE
+}
+
 get_vminfo() {
     SSH_ERR_FILE=$(mktemp)
     if [ "$SSH_USER" != "" ] ; then
@@ -74,15 +100,24 @@ get_vminfo() {
     rm -f $SSH_ERR_FILE
 }
 
+get_vmlist() {
+    SSH_ERR_FILE=$(mktemp)
+    if [ "$SSH_USER" != "" ] ; then
+        SSH_CMD="${SSH_USER}@${SSH_HOST}"
+    else
+        SSH_CMD="${SSH_HOST}"
+    fi
+    VMLIST=`ssh -oBatchMode=yes ${SSH_CMD} 'onevm list -l ID,NAME --csv' 2> $SSH_ERR_FILE | sed 1d | tr ',' '\n'`
+    SSH_ERROR=`cat $SSH_ERR_FILE`
+    if [ "$SSH_ERROR" != "" ] ; then error "SSH Connection failure:\n$SSH_ERROR"; exit 1 ; fi
+    rm -f $SSH_ERR_FILE
+}
+
 connect_vm() {
-    select_vm
     get_vminfo
     HOST=`echo $VMINFO | grep -Po '(?<=\<HOSTNAME\>)[0-9a-zA-Z-]*(?=\</HOSTNAME\>)' | head -n1`
     PORT=`echo $VMINFO | grep -Po '(?<=\<PORT\>\<!\[CDATA\[)[0-9]*(?=\]\]\>\</PORT\>)' | head -n1`
     PASSWD=`echo $VMINFO | grep -Po '(?<=\<PASSWD\>\<!\[CDATA\[)[0-9a-zA-Z-]*(?=\]\]\>\</PASSWD\>)' | head -n1`
-    echo $VMINFO
-    echo HOST: $HOST PORT:  $PORT PASSWD:  $PASSWD
-
     VV_FILE=$(mktemp)
     cat > $VV_FILE <<EOF
 [virt-viewer]
@@ -98,7 +133,12 @@ release-cursor=shift+f12
 secure-attention=ctrl+alt+end
 EOF
 
+    cat $VV_FILE
     remote-viewer $VV_FILE
 }
 loadkeys $@
+select_vm
+start_vm
+sleep 10
 connect_vm
+stop_vm
