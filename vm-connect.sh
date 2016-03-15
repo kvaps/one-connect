@@ -7,18 +7,23 @@ usage() {
       echo "    -H, --host                  OpenNebula hostname or IP"
       echo "    -u, --user                  Username for SSH-connection"
       echo "    -l, --log-file              Path to log file"
+      echo "    -d, --debug                 Enable debug output"
       echo "    -h, --help                  This message"
       exit
 }
 
+debug() {
+    echo -e "[DEBUG] $1"
+    if [ "$LOG_FILE" != "" ] ; then echo -e `date "+[%m-%d-%y %T][DEBUG] "` $1 >> $LOG_FILE ; fi
+}
 error() {
-    echo -e $1
-    if [ "$LOG_FILE" != "" ] ; then echo -e `date "+[%m-%d-%y %T] "` $1 >> $LOG_FILE ; fi
+    echo -e "[ERR] $1"
+    if [ "$LOG_FILE" != "" ] ; then echo -e `date "+[%m-%d-%y %T][ERROR] "` $1 >> $LOG_FILE ; fi
     zenity --error --text "\n$1\n"
 }
 
 loadkeys() {
-    OPTS=`getopt -o hHul: --long help,host,user,log-file: -n 'parse-options' -- "$@"`
+    OPTS=`getopt -o hHuld: --long help,host,user,log-file,debug: -n 'parse-options' -- "$@"`
     
     if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
     
@@ -26,6 +31,7 @@ loadkeys() {
     SSH_HOST=
     SSH_USER=
     LOG_FILE=
+    DEBUG=
     
     while true; do
       case "$1" in
@@ -33,6 +39,7 @@ loadkeys() {
         -u | --user     ) SSH_USER="$2"; shift ; shift ;;
         -l | --log-file ) LOG_FILE="$2"; shift ; shift ;;
         -h | --help     ) HELP=true; shift ;;
+        -d | --debug    ) DEBUG=true; shift ;;
         -- ) shift; break ;;
         * ) break ;;
       esac
@@ -42,75 +49,50 @@ loadkeys() {
     if [ "$SSH_HOST" == "" ] ; then error "Host address is not set" break; exit 1; fi
 }
 
-get_vmlist() {
+ssh_exec() {
     SSH_ERR_FILE=$(mktemp)
     if [ "$SSH_USER" != "" ] ; then
-        SSH_CMD="${SSH_USER}@${SSH_HOST}"
+        SSH_BASE="${SSH_USER}@${SSH_HOST}"
     else
-        SSH_CMD="${SSH_HOST}"
+        SSH_BASE="${SSH_HOST}"
     fi
-    VMLIST=`ssh -oBatchMode=yes ${SSH_CMD} 'onevm list -l ID,NAME --csv' 2> $SSH_ERR_FILE | sed 1d | tr ',' '\n'`
+
+        SSH_CMD="ssh -oBatchMode=yes ${SSH_BASE}"
+    if [ -z "$2" ] ; then
+        debug "executing: $SSH_CMD $1"
+        eval "SSH_STDOUT=\`$SSH_CMD $1 2> $SSH_ERR_FILE\`"
+        eval 'debug "received: $'$SSH_STDOUT'"'
+    else
+        debug "executing: $1=\`$SSH_CMD $2\`"
+        eval "$1=\`$SSH_CMD $2 2> $SSH_ERR_FILE\`"
+        eval 'debug "received: $'$1'"'
+    fi
+
     SSH_ERROR=`cat $SSH_ERR_FILE`
     if [ "$SSH_ERROR" != "" ] ; then error "SSH Connection failure:\n$SSH_ERROR"; exit 1 ; fi
     rm -f $SSH_ERR_FILE
+}
+
+get_vmlist() {
+    ssh_exec 'VMLIST' "onevm list -l ID,NAME --csv"
+    IFS='' VMLIST=`echo $VMLIST | sed 1d | tr ',' '\n'`
 }
 
 select_vm() {
     get_vmlist
-    IFS=$'\n'
-    SELECTED_VM=`zenity --list --title='Choose vm' --column="ID" --column="NAME" ${VMLIST[@]}`
+    IFS=$'\n' SELECTED_VM=`zenity --list --title='Choose vm' --column="ID" --column="NAME" ${VMLIST[@]}`
 }
 
 start_vm() {
-    SSH_ERR_FILE=$(mktemp)
-    if [ "$SSH_USER" != "" ] ; then
-        SSH_CMD="${SSH_USER}@${SSH_HOST}"
-    else
-        SSH_CMD="${SSH_HOST}"
-    fi
-    ssh -oBatchMode=yes ${SSH_CMD} "onevm resume $SELECTED_VM " 2> $SSH_ERR_FILE
-    SSH_ERROR=`cat $SSH_ERR_FILE`
-    if [ "$SSH_ERROR" != "" ] ; then error "SSH Connection failure:\n$SSH_ERROR"; exit 1 ; fi
-    rm -f $SSH_ERR_FILE
+    ssh_exec "onevm resume $SELECTED_VM"
 }
 
 stop_vm() {
-    SSH_ERR_FILE=$(mktemp)
-    if [ "$SSH_USER" != "" ] ; then
-        SSH_CMD="${SSH_USER}@${SSH_HOST}"
-    else
-        SSH_CMD="${SSH_HOST}"
-    fi
-    ssh -oBatchMode=yes ${SSH_CMD} "onevm poweroff $SELECTED_VM " 2> $SSH_ERR_FILE
-    SSH_ERROR=`cat $SSH_ERR_FILE`
-    if [ "$SSH_ERROR" != "" ] ; then error "SSH Connection failure:\n$SSH_ERROR"; exit 1 ; fi
-    rm -f $SSH_ERR_FILE
+    ssh_exec "onevm poweroff $SELECTED_VM"
 }
 
 get_vminfo() {
-    SSH_ERR_FILE=$(mktemp)
-    if [ "$SSH_USER" != "" ] ; then
-        SSH_CMD="${SSH_USER}@${SSH_HOST}"
-    else
-        SSH_CMD="${SSH_HOST}"
-    fi
-    VMINFO=`ssh -oBatchMode=yes ${SSH_CMD} "onevm show $SELECTED_VM --xml" 2> $SSH_ERR_FILE`
-    SSH_ERROR=`cat $SSH_ERR_FILE`
-    if [ "$SSH_ERROR" != "" ] ; then error "SSH Connection failure:\n$SSH_ERROR"; exit 1 ; fi
-    rm -f $SSH_ERR_FILE
-}
-
-get_vmlist() {
-    SSH_ERR_FILE=$(mktemp)
-    if [ "$SSH_USER" != "" ] ; then
-        SSH_CMD="${SSH_USER}@${SSH_HOST}"
-    else
-        SSH_CMD="${SSH_HOST}"
-    fi
-    VMLIST=`ssh -oBatchMode=yes ${SSH_CMD} 'onevm list -l ID,NAME --csv' 2> $SSH_ERR_FILE | sed 1d | tr ',' '\n'`
-    SSH_ERROR=`cat $SSH_ERR_FILE`
-    if [ "$SSH_ERROR" != "" ] ; then error "SSH Connection failure:\n$SSH_ERROR"; exit 1 ; fi
-    rm -f $SSH_ERR_FILE
+    ssh_exec 'VMINFO' "onevm show $SELECTED_VM --xml"
 }
 
 connect_vm() {
@@ -133,7 +115,7 @@ release-cursor=shift+f12
 secure-attention=ctrl+alt+end
 EOF
 
-    cat $VV_FILE
+    debug "VV file: \n`cat $VV_FILE`"
     remote-viewer $VV_FILE
 }
 loadkeys $@
