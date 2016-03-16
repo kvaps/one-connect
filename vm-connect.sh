@@ -59,12 +59,12 @@ ssh_exec() {
 
         SSH_CMD="ssh -oBatchMode=yes ${SSH_BASE}"
     if [ -z "$2" ] ; then
-        debug "executing: $SSH_CMD $1"
-        eval "SSH_STDOUT=\`$SSH_CMD $1 2> $SSH_ERR_FILE\`"
+        debug "executing: $SSH_CMD '$1'"
+        eval "SSH_STDOUT=\$($SSH_CMD '$1' 2\> $SSH_ERR_FILE)"
         eval 'debug "received: $'$SSH_STDOUT'"'
     else
-        debug "executing: $1=\`$SSH_CMD $2\`"
-        eval "$1=\`$SSH_CMD $2 2> $SSH_ERR_FILE\`"
+        debug "executing: $1=\$($SSH_CMD '$2')"
+        eval "$1=\$($SSH_CMD '$2' 2\> $SSH_ERR_FILE)"
         eval 'debug "received: $'$1'"'
     fi
 
@@ -74,21 +74,30 @@ ssh_exec() {
 }
 
 get_vmlist() {
-    ssh_exec 'VMLIST' "onevm list -l ID,NAME --csv"
-    IFS='' VMLIST=`echo $VMLIST | sed 1d | tr ',' '\n'`
+    ssh_exec 'VMLIST' 'onevm list -l ID,NAME --csv'
+    IFS=''
+    VMLIST=`echo $VMLIST | sed 1d | tr ',' '\n'`
+    unset IFS
 }
 
 select_vm() {
     get_vmlist
-    IFS=$'\n' SELECTED_VM=`zenity --list --title='Choose vm' --column="ID" --column="NAME" ${VMLIST[@]}`
+    IFS=$'\n'
+    SELECTED_VM=`zenity --list --title='Choose vm' --column="ID" --column="NAME" ${VMLIST[@]}`
+    unset IFS
 }
 
 start_vm() {
-    ssh_exec "onevm resume $SELECTED_VM"
+    debug "start vm"
+    #wait for LCM_STATE == 0 or 3, and write it to variable
+ssh_exec 'LCM_STATE' 'get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*" ; until [ "`eval $get_state`" == "0" ] || [ "`eval $get_state`" == "3" ] ; do sleep 1 ; done ; eval $get_state'
+    if [ "$LCM_STATE" == "0" ] ; then
+        ssh_exec "onevm resume $SELECTED_VM"
+    fi
 }
 
 stop_vm() {
-    ssh_exec "onevm poweroff $SELECTED_VM"
+    ssh_exec "onevm suspend $SELECTED_VM"
 }
 
 get_vminfo() {
@@ -96,7 +105,10 @@ get_vminfo() {
 }
 
 connect_vm() {
+    # wait for LCM_STATE == 3, and connect
+    ssh_exec 'VMINFO' 'get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*" ; until [ "`eval $get_state`" == "3" ] ; do sleep 1 ; done'
     get_vminfo
+
     HOST=`echo $VMINFO | grep -Po '(?<=\<HOSTNAME\>)[0-9a-zA-Z-]*(?=\</HOSTNAME\>)' | head -n1`
     PORT=`echo $VMINFO | grep -Po '(?<=\<PORT\>\<!\[CDATA\[)[0-9]*(?=\]\]\>\</PORT\>)' | head -n1`
     PASSWD=`echo $VMINFO | grep -Po '(?<=\<PASSWD\>\<!\[CDATA\[)[0-9a-zA-Z-]*(?=\]\]\>\</PASSWD\>)' | head -n1`
@@ -119,9 +131,9 @@ EOF
     debug "VV file: \n`cat $VV_FILE`"
     remote-viewer $VV_FILE
 }
+
 loadkeys $@
 select_vm
-#start_vm
-sleep 10
+start_vm
 connect_vm
-#stop_vm
+stop_vm
