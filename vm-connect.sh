@@ -100,10 +100,11 @@ connect_vm() {
     HOST=`echo $VMINFO | grep -Po '(?<=\<HOSTNAME\>)[0-9a-zA-Z-]*(?=\</HOSTNAME\>)' | head -n1`
     PORT=`echo $VMINFO | grep -Po '(?<=\<PORT\>\<!\[CDATA\[)[0-9]*(?=\]\]\>\</PORT\>)' | head -n1`
     PASSWD=`echo $VMINFO | grep -Po '(?<=\<PASSWD\>\<!\[CDATA\[)[0-9a-zA-Z-]*(?=\]\]\>\</PASSWD\>)' | head -n1`
+    TYPE=`echo $VMINFO | grep -Po '(?<=\<TYPE\>\<!\[CDATA\[)(vnc|spice|VNC|SPICE)(?=\]\]\>\</TYPE\>)' | head -n1`
     VV_FILE=$(mktemp)
     cat > $VV_FILE <<EOF
 [virt-viewer]
-type=spice
+type=$TYPE
 host=$HOST
 port=$PORT
 password=$PASSWD
@@ -120,7 +121,7 @@ EOF
 }
 loadkeys $@
 select_vm
-start_vm
+#start_vm
 sleep 10
 connect_vm
-stop_vm
+#stop_vm
