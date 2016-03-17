@@ -102,7 +102,7 @@ get_vmlist() {
 select_vm() {
     get_vmlist
     IFS=$'\n'
-    SELECTED_VM=`zenity --list --title=$TITLE --text='Choose vm:' --column="ID" --column="NAME" ${VMLIST[@]}`
+    SELECTED_VM=`zenity --list --title=$TITLE --width=600 --height=700 --text='Choose vm:' --column="ID" --column="NAME" ${VMLIST[@]}`
     if [ -z "$SELECTED_VM" ] ; then 
         debug 'aborted'
         exit 0
