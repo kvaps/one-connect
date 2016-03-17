@@ -15,12 +15,12 @@ usage() {
 debug() {
     if [ "$DEBUG" == true ] ; then
         echo -e "[DEBUG] $1"
-        if [ "$LOG_FILE" != "" ] ; then echo -e `date "+[%m-%d-%y %T][DEBUG] "` $1 >> $LOG_FILE ; fi
+        if [ ! -z "$LOG_FILE" ] ; then echo -e `date "+[%m-%d-%y %T][DEBUG] "` $1 >> $LOG_FILE ; fi
     fi
 }
 error() {
     echo -e "[ERR] $1"
-    if [ "$LOG_FILE" != "" ] ; then echo -e `date "+[%m-%d-%y %T][ERROR] "` $1 >> $LOG_FILE ; fi
+    if [ ! -z "$LOG_FILE" ] ; then echo -e `date "+[%m-%d-%y %T][ERROR] "` $1 >> $LOG_FILE ; fi
     zenity --title=$TITLE --error --text "\n$1\n"
 }
 
@@ -49,17 +49,17 @@ loadkeys() {
     done
 
     if [ "$HELP" == true ] ; then usage; break; fi
-    if [ "$SSH_HOST" == "" ] ; then error "Host address is not set" break; exit 1; fi
+    if [ -z "$SSH_HOST" ] ; then error "Host address is not set" break; exit 1; fi
 }
 
 ssh_exec() {
     SSH_ERR_FILE=$(mktemp)
     SSH_OUT_FILE=$(mktemp)
 
-    if [ "$SSH_USER" != "" ] ; then
-        SSH_BASE="${SSH_USER}@${SSH_HOST}"
-    else
+    if [ -z "$SSH_USER" ] ; then
         SSH_BASE="${SSH_HOST}"
+    else
+        SSH_BASE="${SSH_USER}@${SSH_HOST}"
     fi
         SSH_CMD="ssh -oBatchMode=yes ${SSH_BASE}"
 
@@ -81,7 +81,7 @@ ssh_exec() {
 
     debug "received: $SSH_OUT"
 
-    if [ "$SSH_ERR" != "" ] ; then
+    if [ ! -z "$SSH_ERR" ] ; then
         error "SSH Connection failure:\n$SSH_ERROR"
         exit 1
     fi
@@ -103,7 +103,7 @@ select_vm() {
     get_vmlist
     IFS=$'\n'
     SELECTED_VM=`zenity --list --title=$TITLE --text='Choose vm:' --column="ID" --column="NAME" ${VMLIST[@]}`
-    if [ "$SELECTED_VM" == "" ] ; then 
+    if [ -z "$SELECTED_VM" ] ; then 
         debug 'aborted'
         exit 0
     fi
