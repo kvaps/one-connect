@@ -19,7 +19,7 @@ debug() {
 error() {
     echo -e "[ERR] $1"
     if [ "$LOG_FILE" != "" ] ; then echo -e `date "+[%m-%d-%y %T][ERROR] "` $1 >> $LOG_FILE ; fi
-    zenity --error --text "\n$1\n"
+    zenity --title=$TITLE --error --text "\n$1\n"
 }
 
 loadkeys() {
@@ -32,6 +32,7 @@ loadkeys() {
     SSH_USER=
     LOG_FILE=
     DEBUG=
+    TITLE=`basename "$0"`
     
     while true; do
       case "$1" in
@@ -69,7 +70,7 @@ ssh_exec() {
     fi
 
     debug "executing: $SSH_CMD '$COMMAND'"
-    eval "SSH_OUT=\$($SSH_CMD '$COMMAND' 1> $SSH_OUT_FILE 2> $SSH_ERR_FILE)" | zenity --text="$DESCRIPTION" --progress --auto-close
+    eval "SSH_OUT=\$($SSH_CMD '$COMMAND' 1> $SSH_OUT_FILE 2> $SSH_ERR_FILE)" | zenity --title=$TITLE --text="$DESCRIPTION" --progress --auto-close
 
     SSH_OUT=`cat $SSH_OUT_FILE`
     rm -f $SSH_OUT_FILE
@@ -90,7 +91,7 @@ ssh_exec() {
 }
 
 get_vmlist() {
-    ssh_exec 'VMLIST' 'onevm list -l ID,NAME --csv' 'Getting VMs list'
+    ssh_exec 'VMLIST' 'onevm list -l ID,NAME --csv' 'Getting VMs list...'
     IFS=''
     VMLIST=`echo $VMLIST | sed 1d | tr ',' '\n'`
     unset IFS
@@ -99,30 +100,34 @@ get_vmlist() {
 select_vm() {
     get_vmlist
     IFS=$'\n'
-    SELECTED_VM=`zenity --list --title='Choose vm' --column="ID" --column="NAME" ${VMLIST[@]}`
+    SELECTED_VM=`zenity --list --title=$TITLE --text='Choose vm:' --column="ID" --column="NAME" ${VMLIST[@]}`
+    if [ "$SELECTED_VM" == "" ] ; then 
+        debug 'aborted'
+        exit 0
+    fi
     unset IFS
 }
 
 start_vm() {
     debug "start vm"
     #wait for LCM_STATE == 0 or 3, and write it to variable
-ssh_exec 'LCM_STATE' 'get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*" ; until [ "`eval $get_state`" == "0" ] || [ "`eval $get_state`" == "3" ] ; do sleep 1 ; done ; eval $get_state' 'Waiting for operable state'
+ssh_exec 'LCM_STATE' 'get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*" ; until [ "`eval $get_state`" == "0" ] || [ "`eval $get_state`" == "3" ] ; do sleep 1 ; done ; eval $get_state' 'Waiting for operable state...'
     if [ "$LCM_STATE" == "0" ] ; then
-        ssh_exec "onevm resume $SELECTED_VM" 'Resuming VM'
+        ssh_exec "onevm resume $SELECTED_VM" 'Resuming VM...'
     fi
 }
 
 stop_vm() {
-    ssh_exec "onevm suspend $SELECTED_VM" 'Suspending VM'
+    ssh_exec "onevm suspend $SELECTED_VM" 'Suspending VM...'
 }
 
 get_vminfo() {
-    ssh_exec 'VMINFO' "onevm show $SELECTED_VM --xml" 'Getting VM info'
+    ssh_exec 'VMINFO' "onevm show $SELECTED_VM --xml" 'Getting VM address...'
 }
 
 connect_vm() {
     # wait for LCM_STATE == 3, and connect
-    ssh_exec 'VMINFO' 'get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*" ; until [ "`eval $get_state`" == "3" ] ; do sleep 1 ; done' 'Waiting for connect state'
+    ssh_exec 'VMINFO' 'get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*" ; until [ "`eval $get_state`" == "3" ] ; do sleep 1 ; done' 'Waiting for connect state...'
     get_vminfo
 
     HOST=`echo $VMINFO | grep -Po '(?<=\<HOSTNAME\>)[0-9a-zA-Z-]*(?=\</HOSTNAME\>)' | head -n1`
