@@ -13,8 +13,10 @@ usage() {
 }
 
 debug() {
-    echo -e "[DEBUG] $1"
-    if [ "$LOG_FILE" != "" ] ; then echo -e `date "+[%m-%d-%y %T][DEBUG] "` $1 >> $LOG_FILE ; fi
+    if [ "$DEBUG" == true ] ; then
+        echo -e "[DEBUG] $1"
+        if [ "$LOG_FILE" != "" ] ; then echo -e `date "+[%m-%d-%y %T][DEBUG] "` $1 >> $LOG_FILE ; fi
+    fi
 }
 error() {
     echo -e "[ERR] $1"
@@ -84,7 +86,7 @@ ssh_exec() {
         exit 1
     fi
 
-    if [ ! -z "$2" ] ; then
+    if [ ! -z "$3" ] ; then
         eval $1='`echo "$SSH_OUT"`'
     fi
 
