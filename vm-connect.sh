@@ -6,6 +6,7 @@ usage() {
       echo "Arguments:"
       echo "    -H, --host                  OpenNebula hostname or IP"
       echo "    -u, --user                  Username for SSH-connection"
+      echo "    -n, --no-suspend            No suspend vm after disconnect"
       echo "    -l, --log-file              Path to log file"
       echo "    -d, --debug                 Enable debug output"
       echo "    -h, --help                  This message"
@@ -25,7 +26,7 @@ error() {
 }
 
 loadkeys() {
-    OPTS=`getopt -o hHuld: --long help,host,user,log-file,debug: -n 'parse-options' -- "$@"`
+    OPTS=`getopt -o hdnHul: --long help,debug,no-suspend,host,user,log-file: -n 'parse-options' -- "$@"`
     
     if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
     
@@ -34,15 +35,17 @@ loadkeys() {
     SSH_USER=
     LOG_FILE=
     DEBUG=
+    NO_SUSPEND=
     TITLE=`basename "$0"`
     
     while true; do
       case "$1" in
-        -H | --host     ) SSH_HOST="$2"; shift ; shift ;;
-        -u | --user     ) SSH_USER="$2"; shift ; shift ;;
-        -l | --log-file ) LOG_FILE="$2"; shift ; shift ;;
-        -h | --help     ) HELP=true; shift ;;
-        -d | --debug    ) DEBUG=true; shift ;;
+        -h | --help       ) HELP=true; shift ;;
+        -d | --debug      ) DEBUG=true; shift ;;
+        -n | --no-suspend ) NO_SUSPEND=true; shift ;;
+        -H | --host       ) SSH_HOST="$2"; shift ; shift ;;
+        -u | --user       ) SSH_USER="$2"; shift ; shift ;;
+        -l | --log-file   ) LOG_FILE="$2"; shift ; shift ;;
         -- ) shift; break ;;
         * ) break ;;
       esac
@@ -120,7 +123,9 @@ ssh_exec 'LCM_STATE' 'get_state="onevm show '$SELECTED_VM' --xml | grep --color=
 }
 
 stop_vm() {
-    ssh_exec "onevm suspend $SELECTED_VM" 'Suspending VM...'
+    if [ "$NO_SUSPEND" == true ] ; then
+        ssh_exec "onevm suspend $SELECTED_VM" 'Suspending VM...'
+    fi
 }
 
 get_vminfo() {
