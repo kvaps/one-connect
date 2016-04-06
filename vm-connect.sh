@@ -137,9 +137,9 @@ connect_vm() {
     ssh_exec 'VMINFO' 'get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*" ; until [ "`eval $get_state`" == "3" ] ; do sleep 1 ; done' 'Waiting for connect state...'
     get_vminfo
 
-    HOST=`echo $VMINFO | grep -Po '(?<=\<HOSTNAME\>)[0-9a-zA-Z-]*(?=\</HOSTNAME\>)' | head -n1`
+    HOST=`echo $VMINFO | grep -Po '(?<=\<HOSTNAME\>)[0-9a-zA-Z-_.]*(?=\</HOSTNAME\>)' | head -n1`
     PORT=`echo $VMINFO | grep -Po '(?<=\<PORT\>\<!\[CDATA\[)[0-9]*(?=\]\]\>\</PORT\>)' | head -n1`
-    PASSWD=`echo $VMINFO | grep -Po '(?<=\<PASSWD\>\<!\[CDATA\[)[0-9a-zA-Z-]*(?=\]\]\>\</PASSWD\>)' | head -n1`
+    PASSWD=`echo $VMINFO | grep -Po '(?<=\<PASSWD\>\<!\[CDATA\[).*(?=\]\]\>\</PASSWD\>)' | head -n1`
     TYPE=`echo $VMINFO | grep -Po '(?<=\<TYPE\>\<!\[CDATA\[)(vnc|spice|VNC|SPICE)(?=\]\]\>\</TYPE\>)' | head -n1`
     VV_FILE=$(mktemp)
     cat > $VV_FILE <<EOF
