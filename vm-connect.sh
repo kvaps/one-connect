@@ -123,7 +123,7 @@ ssh_exec 'LCM_STATE' 'get_state="onevm show '$SELECTED_VM' --xml | grep --color=
 }
 
 stop_vm() {
-    if [ "$NO_SUSPEND" == true ] ; then
+    if [ "$NO_SUSPEND" != true ] ; then
         ssh_exec "onevm suspend $SELECTED_VM" 'Suspending VM...'
     fi
 }
