@@ -96,7 +96,7 @@ ssh_exec() {
 }
 
 get_vmlist() {
-    ssh_exec 'VMLIST' 'onevm list -l ID,NAME --csv' 'Getting VMs list...'
+    ssh_exec 'VMLIST' 'onevm list -l ID,NAME,STAT --csv' 'Getting VMs list...'
     IFS=''
     VMLIST=`echo $VMLIST | sed 1d | tr ',' '\n'`
     unset IFS
@@ -105,7 +105,7 @@ get_vmlist() {
 select_vm() {
     get_vmlist
     IFS=$'\n'
-    SELECTED_VM=`zenity --list --title=$TITLE --width=600 --height=700 --text='Choose vm:' --column="ID" --column="NAME" ${VMLIST[@]}`
+    SELECTED_VM=`zenity --list --title=$TITLE --width=600 --height=700 --text='Choose vm:' --column="ID" --column="NAME" --column="STAT" ${VMLIST[@]}`
     if [ -z "$SELECTED_VM" ] ; then 
         debug 'aborted'
         exit 0
