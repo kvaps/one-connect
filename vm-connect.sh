@@ -125,7 +125,13 @@ start_vm() {
     ' 'Waiting for operable state...'
 
     if [ "$LCM_STATE" == "0" ] ; then
-        ssh_exec "onevm resume $SELECTED_VM" 'Resuming VM...'
+        ssh_exec "
+            onevm resume $SELECTED_VM
+            # if STATE=HOLD
+            if [ ! -z \"\$(onevm show 59 --xml | grep --color=never -o \<STATE\>2\<\/STATE\>)\" ] ; then
+                onevm release $SELECTED_VM
+            fi
+        " 'Resuming VM...'
     fi
 }
 
