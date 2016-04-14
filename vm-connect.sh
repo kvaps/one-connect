@@ -128,7 +128,7 @@ start_vm() {
         ssh_exec "
             onevm resume $SELECTED_VM
             # if STATE=HOLD
-            if [ ! -z \"\$(onevm show 59 --xml | grep --color=never -o \<STATE\>2\<\/STATE\>)\" ] ; then
+            if [ ! -z \"\$(onevm show 59 --xml | grep --color=never -E -o \<STATE\>\(2\|6\)\<\/STATE\>)\" ] ; then
                 onevm release $SELECTED_VM
             fi
         " 'Resuming VM...'
