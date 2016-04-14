@@ -116,7 +116,14 @@ select_vm() {
 start_vm() {
     debug "start vm"
     #wait for LCM_STATE == 0 or 3, and write it to variable
-ssh_exec 'LCM_STATE' 'get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*" ; until [ "`eval $get_state`" == "0" ] || [ "`eval $get_state`" == "3" ] ; do sleep 1 ; done ; eval $get_state' 'Waiting for operable state...'
+    ssh_exec 'LCM_STATE' '
+        get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*"
+        until [ "`eval $get_state`" == "0" ] || [ "`eval $get_state`" == "3" ] ; do
+            sleep 1
+        done
+        eval $get_state
+    ' 'Waiting for operable state...'
+
     if [ "$LCM_STATE" == "0" ] ; then
         ssh_exec "onevm resume $SELECTED_VM" 'Resuming VM...'
     fi
@@ -134,7 +141,12 @@ get_vminfo() {
 
 connect_vm() {
     # wait for LCM_STATE == 3, and connect
-    ssh_exec 'VMINFO' 'get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*" ; until [ "`eval $get_state`" == "3" ] ; do sleep 1 ; done' 'Waiting for connect state...'
+    ssh_exec 'VMINFO' '
+        get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*"
+        until [ "`eval $get_state`" == "3" ] ; do
+            sleep 1
+        done
+    ' 'Waiting for connect state...'
     get_vminfo
 
     HOST=`echo $VMINFO | grep -Po '(?<=\<HOSTNAME\>)[0-9a-zA-Z-_.]*(?=\</HOSTNAME\>)' | head -n1`
