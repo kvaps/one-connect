@@ -35,8 +35,8 @@ Arguments:
   [[windows binary](http://www.placella.com/software/zenity/#downloads)]
 
 Windows only:
-* **MinGW** (msys-base package)
-  [[windows binary](https://sourceforge.net/projects/mingw/)]
+* **Git Bash**
+  [[windows binary](https://git-for-windows.github.io/)]
 
 *Also, don't forget to add virt-viewer bin folder to your windows PATH [[howto](http://superuser.com/a/317638)]*
 
