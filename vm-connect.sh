@@ -176,7 +176,10 @@ secure-attention=ctrl+alt+end
 EOF
 
     debug "VV file: \n`cat $VV_FILE`"
-    remote-viewer $VV_FILE
+	if [ "$(uname -o)" == "Cygwin" ] ; then
+	    VV_FILE="$(cygpath -w $VV_FILE)"
+	fi
+    remote-viewer "$VV_FILE"
 }
 
 loadkeys $@
