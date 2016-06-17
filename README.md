@@ -28,15 +28,54 @@ Arguments:
 
 ## Dependings
 
+### Linux
+
+Just install `virt-viewer` and `zenity` packages.
+
+### Windows
+
 * **Virt-viewer**
   [[windows binary](https://virt-manager.org/download/)]
+
+Also, don't forget to add virt-viewer bin folder to your windows PATH [[howto](http://superuser.com/a/317638)]
+
+Next, you have a two way:
+
+#### Git Bash
+
+The simple way. Just install:
+
+* **Git Bash**
+  [[windows binary](https://git-for-windows.github.io/)]
 
 * **Zenity**
   [[windows binary](http://www.placella.com/software/zenity/#downloads)]
 
-Windows only:
-* **Git Bash**
-  [[windows binary](https://git-for-windows.github.io/)]
+You can run script using launcher.exe from [release v1.0](https://github.com/kvaps/one-connect/releases/download/v1.0/one-connect.zip)
 
-*Also, don't forget to add virt-viewer bin folder to your windows PATH [[howto](http://superuser.com/a/317638)]*
+#### Cygwin 
 
+This way is more complex, but provides a more recent versions of the software that allows you to avoid some bugs. Install:
+
+* **Cygwin**
+  [[windows binary](http://www.cygwin.com/install.html)]
+
+
+During installation, select the following additional packages:
+  - xorg-server
+  - xinit
+  - openssh
+  - zenity
+  - dbus
+
+Use this command for xorg-server autostart:
+
+    C:\cygwin\bin\mintty.exe -w hide -e /bin/bash -lc 'startxwin'
+
+Create shortcut for start vm-connect script:
+
+    C:\cygwin\bin\mintty.exe -w hide -e /bin/bash -lc '$(cygpath "C:\Soft\one-connect\vm-connect.sh") -H hostname -u user'
+
+Or for enable debug output:
+
+    C:\cygwin\bin\mintty.exe -e /bin/bash -lc '$(cygpath "C:\Soft\one-connect\vm-connect.sh") -d -H hostname -u user'
