@@ -68,6 +68,8 @@ During installation, select the following additional packages:
   - zenity
   - dbus
 
+Also you need to add `DISPLAY=:0` variable for system environment variables.
+
 Use this command for xorg-server autostart:
 
     C:\cygwin\bin\mintty.exe -w hide -e /bin/bash -lc 'startxwin'
