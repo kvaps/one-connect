@@ -51,7 +51,13 @@ The simple way. Just install:
 * **Zenity**
   [[windows binary](http://www.placella.com/software/zenity/#downloads)]
 
-You can run script using launcher.exe from [release v1.0](https://github.com/kvaps/one-connect/releases/download/v1.0/one-connect.zip)
+Create shortcut for start vm-connect script:
+
+    "C:\Program Files\Git\usr\bin\mintty.exe" -w hide -e /bin/bash -lc '$(cygpath "C:\Soft\one-connect\vm-connect.sh") -H hostname -u user'
+
+Or for enable debug output:
+
+    "C:\Program Files\Git\usr\bin\mintty.exe" -e /bin/bash -lc '$(cygpath "C:\Soft\one-connect\vm-connect.sh") -d -H hostname -u user'
 
 #### Cygwin 
 
