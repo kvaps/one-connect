@@ -6,6 +6,7 @@ usage() {
       echo "Arguments:"
       echo "    -H, --host                  OpenNebula hostname or IP"
       echo "    -u, --user                  Username for SSH-connection"
+      echo "    -l, --key-file              Path to ssh identity file"
       echo "    -n, --no-suspend            No suspend vm after disconnect"
       echo "    -l, --log-file              Path to log file"
       echo "    -d, --debug                 Enable debug output"
@@ -26,7 +27,7 @@ error() {
 }
 
 loadkeys() {
-    OPTS=`getopt -o hdnHul: --long help,debug,no-suspend,host,user,log-file: -n 'parse-options' -- "$@"`
+    OPTS=`getopt -o hdnHukl: --long help,debug,no-suspend,host,user,key-file,log-file: -n 'parse-options' -- "$@"`
     
     if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
     
@@ -45,6 +46,8 @@ loadkeys() {
         -n | --no-suspend ) NO_SUSPEND=true; shift ;;
         -H | --host       ) SSH_HOST="$2"; shift ; shift ;;
         -u | --user       ) SSH_USER="$2"; shift ; shift ;;
+        -u | --user       ) SSH_USER="$2"; shift ; shift ;;
+        -k | --key-file   ) KEY_FILE="$2"; shift ; shift ;;
         -l | --log-file   ) LOG_FILE="$2"; shift ; shift ;;
         -- ) shift; break ;;
         * ) break ;;
@@ -64,6 +67,11 @@ ssh_exec() {
     else
         SSH_BASE="${SSH_USER}@${SSH_HOST}"
     fi
+
+    if [ ! -z "$KEY_FILE" ] ; then
+        SSH_BASE="-i ${KEY_FILE} ${SSH_BASE}"
+    fi
+
         SSH_CMD="ssh -oBatchMode=yes ${SSH_BASE}"
 
     if [ -z "$3" ] ; then
