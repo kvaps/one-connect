@@ -68,7 +68,9 @@ During installation, select the following additional packages:
   - zenity
   - dbus
 
-Also you need to add `DISPLAY=:0` variable for system environment variables.
+Also you need to add `DISPLAY=:0` variable to system environment variables.
+
+If you have slow GUI, also add `NO_AT_BRIDGE=1`. [[link to answer](http://unix.stackexchange.com/a/268982/175694)]
 
 Use this command for xorg-server autostart:
 
