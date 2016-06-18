@@ -74,13 +74,9 @@ During installation, select the following additional packages:
   - zenity
   - dbus
 
-Also you need to add `DISPLAY=:0` variable to system environment variables.
-
-If you have slow GUI, also add `NO_AT_BRIDGE=1`. [[link to answer](http://unix.stackexchange.com/a/268982/175694)]
-
 Use this command for xorg-server autostart:
 
-    C:\cygwin\bin\mintty.exe -w hide -e /bin/bash -lc 'startxwin'
+    C:\cygwin\bin\mintty.exe -w hide -e /bin/bash -lc "startxwin 2>&1 | grep -m1 -oP '(?<=DISPLAY=)[0-9.:]*' | tee ~/.Xdisplay & sleep 5 && setx DISPLAY $(cat ~/.Xdisplay) && cat"
 
 Create shortcut for start vm-connect script:
 
@@ -89,3 +85,5 @@ Create shortcut for start vm-connect script:
 Or for enable debug output:
 
     C:\cygwin\bin\mintty.exe -e /bin/bash -lc '$(cygpath "C:\Soft\one-connect\vm-connect.sh") -d -H hostname -u user'
+
+If your GUI too slow, add `NO_AT_BRIDGE=1` variable to your system environment variables . [[link to answer](http://unix.stackexchange.com/a/268982/175694)]
