@@ -69,6 +69,9 @@ ssh_exec() {
     fi
 
     if [ ! -z "$KEY_FILE" ] ; then
+	    if [ "$(uname -o)" == "Cygwin" ] ; then
+	        KEY_FILE="$(cygpath $KEY_FILE)"
+	    fi
         SSH_BASE="-i ${KEY_FILE} ${SSH_BASE}"
     fi
 
