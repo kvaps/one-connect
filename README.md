@@ -39,7 +39,11 @@ Just install `virt-viewer` and `zenity` packages.
 
 Also, don't forget to add virt-viewer bin folder to your windows PATH [[howto](http://superuser.com/a/317638)]
 
-Next, you have a two way:
+Next, you have a two way.
+
+If you intend to use Cyrillic and other character encodings in virtual machines names, please install `recode` and use the second (cygwin) way
+Windows-version of `zenity` bad work with cyrillic in lsits.
+`recode` will be convert html characters in virtual machines names.
 
 #### Git Bash
 

@@ -171,6 +171,11 @@ connect_vm() {
     PORT=`echo $VMINFO | grep -Po '(?<=\<PORT\>\<!\[CDATA\[)[0-9]*(?=\]\]\>\</PORT\>)' | head -n1`
     PASSWD=`echo $VMINFO | grep -Po '(?<=\<PASSWD\>\<!\[CDATA\[).*(?=\]\]\>\</PASSWD\>)' | head -n1`
     TYPE=`echo $VMINFO | grep -Po '(?<=\<TYPE\>\<!\[CDATA\[)(vnc|spice|VNC|SPICE)(?=\]\]\>\</TYPE\>)' | head -n1`
+    NAME=`echo $VMINFO | grep -Po '(?<=\<NAME\>).*(?=\</NAME\>)' | head -n1`
+    if which recode >/dev/null; then
+        NAME=`echo $NAME | recode html..utf8`
+    fi
+
     VV_FILE=$(mktemp)
     cat > $VV_FILE <<EOF
 [virt-viewer]
@@ -180,7 +185,7 @@ port=$PORT
 password=$PASSWD
 delete-this-file=1
 fullscreen=0
-title=win7x86_2:%d
+title=$NAME
 toggle-fullscreen=shift+f11
 release-cursor=shift+f12
 secure-attention=ctrl+alt+end
