@@ -75,7 +75,7 @@ ssh_exec() {
         SSH_BASE="-i ${KEY_FILE} ${SSH_BASE}"
     fi
 
-        SSH_CMD="ssh -oBatchMode=yes ${SSH_BASE}"
+        SSH_CMD="ssh ${SSH_BASE}"
 
     if [ -z "$3" ] ; then
         COMMAND="$1"
@@ -85,12 +85,15 @@ ssh_exec() {
         DESCRIPTION="$3"
     fi
 
+    SSH_ASKPASS=$(dirname "$(readlink -f "$0")")/ssh-askpass.sh
+    [ -f $SSH_ASKPASS ] && export SSH_ASKPASS
+
     debug "executing: $SSH_CMD '$COMMAND'"
-    eval "SSH_OUT=\$($SSH_CMD '$COMMAND' 1> $SSH_OUT_FILE 2> $SSH_ERR_FILE)" | zenity --title=$TITLE --text="$DESCRIPTION" --progress --auto-close
+    eval setsid "$SSH_CMD" "$COMMAND" 1> "$SSH_OUT_FILE" 2> "$SSH_ERR_FILE" | zenity --title="$TITLE" --text="$DESCRIPTION" --progress --auto-close
 
     SSH_OUT=`cat $SSH_OUT_FILE`
     rm -f $SSH_OUT_FILE
-    SSH_ERR=`cat $SSH_ERR_FILE`
+    SSH_ERR=`cat $SSH_ERR_FILE | grep -v ^Gtk`
     rm -f $SSH_ERR_FILE
 
     debug "received: $SSH_OUT"
