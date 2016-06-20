@@ -6,7 +6,7 @@ usage() {
       echo "Arguments:"
       echo "    -H, --host                  OpenNebula hostname or IP"
       echo "    -u, --user                  Username for SSH-connection"
-      echo "    -l, --key-file              Path to ssh identity file"
+      echo "    -k, --key-file              Path to ssh identity file"
       echo "    -n, --no-suspend            No suspend vm after disconnect"
       echo "    -l, --log-file              Path to log file"
       echo "    -d, --debug                 Enable debug output"
@@ -58,6 +58,31 @@ loadkeys() {
     if [ -z "$SSH_HOST" ] ; then error "Host address is not set" break; exit 1; fi
 }
 
+
+create_sshask_script(){
+   cat > "$1" <<EOF
+#!/bin/sh
+prompt=\$(echo \$1 | sed s/_/__/g)
+zenity --entry --title "ssh(1) Authentication" --text="\$prompt" --hide-text
+EOF
+    chmod u+x "$1"
+}
+
+ssh_agent_start() {
+    # Create SSH_ASKPASS script
+    SSH_ASKPASS_SCRIPT="/tmp/ssh-askpass.sh"
+    create_sshask_script $SSH_ASKPASS_SCRIPT
+    export SSH_ASKPASS=$SSH_ASKPASS_SCRIPT
+
+    eval `ssh-agent`
+    echo | setsid ssh-add $KEY_FILE
+}
+
+ssh_agent_stop() {
+    eval `ssh-agent -k`
+    exit 0
+}
+
 ssh_exec() {
     SSH_ERR_FILE=$(mktemp)
     SSH_OUT_FILE=$(mktemp)
@@ -72,10 +97,10 @@ ssh_exec() {
 	    if [ "$(uname -o)" == "Cygwin" ] ; then
 	        KEY_FILE="$(cygpath $KEY_FILE)"
 	    fi
-        SSH_BASE="-i ${KEY_FILE} ${SSH_BASE}"
+        SSH_BASE="${SSH_BASE}"
     fi
 
-        SSH_CMD="ssh ${SSH_BASE}"
+        SSH_CMD="ssh -oBatchMode=yes ${SSH_BASE}"
 
     if [ -z "$3" ] ; then
         COMMAND="$1"
@@ -85,11 +110,8 @@ ssh_exec() {
         DESCRIPTION="$3"
     fi
 
-    SSH_ASKPASS=$(dirname "$(readlink -f "$0")")/ssh-askpass.sh
-    [ -f $SSH_ASKPASS ] && export SSH_ASKPASS
-
     debug "executing: $SSH_CMD '$COMMAND'"
-    eval setsid "$SSH_CMD '$COMMAND' 1> $SSH_OUT_FILE 2> $SSH_ERR_FILE" | zenity --title=$TITLE --text="$DESCRIPTION" --progress --auto-close
+    eval "$SSH_CMD '$COMMAND' 1> $SSH_OUT_FILE 2> $SSH_ERR_FILE" | zenity --title=$TITLE --text="$DESCRIPTION" --progress --auto-close
 
 
     SSH_OUT=`cat $SSH_OUT_FILE`
@@ -203,6 +225,8 @@ EOF
 }
 
 loadkeys $@
+ssh_agent_start
+trap ssh_agent_stop EXIT INT
 select_vm
 start_vm
 connect_vm
