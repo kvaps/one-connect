@@ -89,7 +89,8 @@ ssh_exec() {
     [ -f $SSH_ASKPASS ] && export SSH_ASKPASS
 
     debug "executing: $SSH_CMD '$COMMAND'"
-    eval setsid "$SSH_CMD" "$COMMAND" 1> "$SSH_OUT_FILE" 2> "$SSH_ERR_FILE" | zenity --title="$TITLE" --text="$DESCRIPTION" --progress --auto-close
+    eval setsid "$SSH_CMD '$COMMAND' 1> $SSH_OUT_FILE 2> $SSH_ERR_FILE" | zenity --title=$TITLE --text="$DESCRIPTION" --progress --auto-close
+
 
     SSH_OUT=`cat $SSH_OUT_FILE`
     rm -f $SSH_OUT_FILE
