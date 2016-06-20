@@ -38,6 +38,7 @@ loadkeys() {
     DEBUG=
     NO_SUSPEND=
     TITLE=`basename "$0"`
+    TEMPDIR="$(mktemp -d /tmp/vm-connect-XXXXXXXXXX)"
     
     while true; do
       case "$1" in
@@ -68,24 +69,26 @@ EOF
     chmod u+x "$1"
 }
 
-ssh_agent_start() {
+ssh_login() {
     # Create SSH_ASKPASS script
-    SSH_ASKPASS_SCRIPT="/tmp/ssh-askpass.sh"
+    SSH_ASKPASS_SCRIPT="${TEMPDIR}/ssh-askpass.sh"
     create_sshask_script $SSH_ASKPASS_SCRIPT
     export SSH_ASKPASS=$SSH_ASKPASS_SCRIPT
 
     eval `ssh-agent`
     echo | setsid ssh-add $KEY_FILE
+    rm -f "$SSH_ASKPASS_SCRIPT"
 }
 
-ssh_agent_stop() {
+ssh_logout() {
     eval `ssh-agent -k`
+    rmdir "$TEMPDIR"
     exit 0
 }
 
 ssh_exec() {
-    SSH_ERR_FILE=$(mktemp)
-    SSH_OUT_FILE=$(mktemp)
+    SSH_ERR_FILE="$(mktemp ${TEMPDIR}/ssh-err-XXXXX)"
+    SSH_OUT_FILE="$(mktemp ${TEMPDIR}/ssh-out-XXXXX)"
 
     if [ -z "$SSH_USER" ] ; then
         SSH_BASE="${SSH_HOST}"
@@ -202,7 +205,7 @@ connect_vm() {
         NAME=`echo $NAME | recode html..utf8`
     fi
 
-    VV_FILE=$(mktemp)
+    VV_FILE=$(mktemp --suffix=.vv ${TEMPDIR}/vm-XXXXX)
     cat > $VV_FILE <<EOF
 [virt-viewer]
 type=$TYPE
@@ -225,8 +228,8 @@ EOF
 }
 
 loadkeys $@
-ssh_agent_start
-trap ssh_agent_stop EXIT INT
+ssh_login
+trap ssh_logout EXIT INT
 select_vm
 start_vm
 connect_vm
