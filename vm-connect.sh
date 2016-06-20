@@ -96,7 +96,7 @@ ssh_exec() {
     debug "received: $SSH_OUT"
 
     if [ ! -z "$SSH_ERR" ] ; then
-        error "SSH Connection failure:\n$SSH_ERROR"
+        error "SSH Connection failure:\n$SSH_ERR"
         exit 1
     fi
 
