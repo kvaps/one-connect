@@ -167,7 +167,7 @@ start_vm() {
     if [ "$LCM_STATE" == "0" ] ; then
         ssh_exec "
             # if STATE=HOLD
-            if [ ! -z \"\$(onevm show 59 --xml | grep --color=never -E -o \<STATE\>\(2\|6\)\<\/STATE\>)\" ] ; then
+            if [ ! -z \"\$(onevm show $SELECTED_VM --xml | grep --color=never -E -o \<STATE\>\(2\|6\)\<\/STATE\>)\" ] ; then
                 onevm release $SELECTED_VM
             else
                 onevm resume $SELECTED_VM
