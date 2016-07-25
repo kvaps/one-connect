@@ -80,7 +80,7 @@ During installation, select the following additional packages:
 
 Use this command for xorg-server autostart:
 
-    C:\cygwin\bin\mintty.exe -w hide -e /bin/bash -lc "startxwin 2>&1 | grep -m1 -oP '(?<=DISPLAY=)[0-9.:]*' | tee ~/.Xdisplay & sleep 5 && setx DISPLAY $(cat ~/.Xdisplay) && cat"
+    C:\cygwin\bin\mintty.exe -w hide -e /bin/bash -lc "setx DISPLAY ''; startxwin 2>&1 | grep -m1 -oP '(?<=DISPLAY=)[0-9.:]*' | tee ~/.Xdisplay & sleep 5 && setx DISPLAY $(cat ~/.Xdisplay) && cat"
 
 Create shortcut for start vm-connect script:
 
