@@ -136,7 +136,7 @@ ssh_exec() {
 }
 
 get_vmlist() {
-    ssh_exec 'VMLIST' 'onevm list -l ID,NAME,STAT --csv' 'Getting VMs list...'
+    ssh_exec 'VMLIST' 'onevm list -l ID,NAME,STAT --csv | sort -t, -k2' 'Getting VMs list...'
     IFS=''
     VMLIST=`echo $VMLIST | sed 1d | tr ',' '\n'`
     unset IFS
