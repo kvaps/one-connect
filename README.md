@@ -39,21 +39,19 @@ Just install `virt-viewer` and `zenity` packages.
 
 Also, don't forget to add virt-viewer bin folder to your windows PATH [[howto](http://superuser.com/a/317638)]
 
-Next, you have a two way.
-
-If you intend to use Cyrillic and other character encodings in virtual machines names, please install `recode` and use the second (cygwin) way
-Windows-version of `zenity` bad work with cyrillic in lsits.
+If you intend to use Cyrillic and other character encodings in virtual machines names, please install `recode`.
+My zenity build for windows already contains this package.
 `recode` will be convert html characters in virtual machines names.
 
 #### Git Bash
 
 The simple way. Just install:
 
-* **Git Bash**
+* **Git Bash** (with adding unix tools to PATH)
   [[windows binary](https://git-for-windows.github.io/)]
 
 * **Zenity**
-  [[windows binary](http://www.placella.com/software/zenity/#downloads)]
+  [[windows binary](https://github.com/kvaps/zenity-windows)]
 
 Create shortcut for start vm-connect script:
 
@@ -62,32 +60,3 @@ Create shortcut for start vm-connect script:
 Or for enable debug output:
 
     "C:\Program Files\Git\usr\bin\mintty.exe" -e /bin/bash -lc '$(cygpath "C:\Soft\one-connect\vm-connect.sh") -d -H hostname -u user'
-
-#### Cygwin 
-
-This way is more complex, but provides a more recent versions of the software that allows you to avoid some bugs. Install:
-
-* **Cygwin**
-  [[windows binary](http://www.cygwin.com/install.html)]
-
-
-During installation, select the following additional packages:
-  - xorg-server
-  - xinit
-  - openssh
-  - zenity
-  - dbus
-
-Use this command for xorg-server autostart:
-
-    C:\cygwin\bin\mintty.exe -w hide -e /bin/bash -lc "setx DISPLAY ''; startxwin 2>&1 | grep -m1 -oP '(?<=DISPLAY=)[0-9.:]*' | tee ~/.Xdisplay & sleep 5 && setx DISPLAY $(cat ~/.Xdisplay) && cat"
-
-Create shortcut for start vm-connect script:
-
-    C:\cygwin\bin\mintty.exe -w hide -e /bin/bash -lc '$(cygpath "C:\Soft\one-connect\vm-connect.sh") -H hostname -u user'
-
-Or for enable debug output:
-
-    C:\cygwin\bin\mintty.exe -e /bin/bash -lc '$(cygpath "C:\Soft\one-connect\vm-connect.sh") -d -H hostname -u user'
-
-If your GUI too slow, add `NO_AT_BRIDGE=1` variable to your system environment variables . [[link to answer](http://unix.stackexchange.com/a/268982/175694)]
