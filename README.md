@@ -32,16 +32,16 @@ Arguments:
 
 Just install `virt-viewer` and `zenity` packages.
 
+If you intend to use Cyrillic and other character encodings in virtual machines names, please install `recode`, it will be convert html characters in virtual machines names.
+
 ### Windows
+
+Install:
 
 * **Virt-viewer**
   [[windows binary](https://virt-manager.org/download/)]
 
 Also, don't forget to add virt-viewer bin folder to your windows PATH [[howto](http://superuser.com/a/317638)]
-
-If you intend to use Cyrillic and other character encodings in virtual machines names, please install `recode`.
-My zenity build for windows already contains this package.
-`recode` will be convert html characters in virtual machines names.
 
 #### Git Bash
 
@@ -53,10 +53,12 @@ The simple way. Just install:
 * **Zenity**
   [[windows binary](https://github.com/kvaps/zenity-windows)]
 
+*My zenity build for windows already contains `recode` package.*
+
 Create shortcut for start vm-connect script:
 
-    "C:\Program Files\Git\usr\bin\mintty.exe" -w hide -e /bin/bash -lc '$(cygpath "C:\Soft\one-connect\vm-connect.sh") -H hostname -u user'
+    mintty.exe -w hide -e bash -c "C:\Soft\one-connect\vm-connect.sh" -H hostname -u user
 
 Or for enable debug output:
 
-    "C:\Program Files\Git\usr\bin\mintty.exe" -e /bin/bash -lc '$(cygpath "C:\Soft\one-connect\vm-connect.sh") -d -H hostname -u user'
+    mintty.exe -e bash -c "C:\Soft\one-connect\vm-connect.sh" -d -H hostname -u user
