@@ -105,17 +105,13 @@ ssh_exec() {
 
         SSH_CMD="ssh -oBatchMode=yes ${SSH_BASE}"
 
-    if [ -z "$3" ] ; then
-        COMMAND="$1"
-        DESCRIPTION="$2"
-    else
-        COMMAND="$2"
-        DESCRIPTION="$3"
+    if [ -z "$2" ]
+    then COMMAND="$1"
+    else COMMAND="$2"
     fi
 
     debug "executing: $SSH_CMD '$COMMAND'"
-    eval "$SSH_CMD '$COMMAND' 1> $SSH_OUT_FILE 2> $SSH_ERR_FILE" | zenity --title=$TITLE --text="$DESCRIPTION" --progress --auto-close
-
+    eval "$SSH_CMD '$COMMAND' 1> $SSH_OUT_FILE 2> $SSH_ERR_FILE"
 
     SSH_OUT=`cat $SSH_OUT_FILE`
     rm -f $SSH_OUT_FILE
@@ -129,21 +125,20 @@ ssh_exec() {
         exit 1
     fi
 
-    if [ ! -z "$3" ] ; then
+    if [ ! -z "$2" ] ; then
         eval $1='`echo "$SSH_OUT"`'
     fi
 
 }
 
 get_vmlist() {
-    ssh_exec 'VMLIST' 'onevm list -l ID,NAME,STAT --csv | (read -r; printf "%s\n" "$REPLY"; sort -t, -k2)' 'Getting VMs list...'
+    ssh_exec 'VMLIST' 'onevm list -l ID,NAME,STAT --csv | (read -r; printf "%s\n" "$REPLY"; sort -t, -k2)'
     IFS=''
     VMLIST=`echo $VMLIST | sed 1d | tr ',' '\n'`
     unset IFS
 }
 
 select_vm() {
-    get_vmlist
     IFS=$'\n'
     SELECTED_VM=`zenity --list --title=$TITLE --width=600 --height=700 --text='Choose vm:' --hide-column=1 --column="ID" --column="Name" --column="Status" ${VMLIST[@]}`
     if [ -z "$SELECTED_VM" ] ; then 
@@ -162,7 +157,7 @@ start_vm() {
             sleep 1
         done
         eval $get_state
-    ' 'Waiting for operable state...'
+    '
 
     if [ "$LCM_STATE" == "0" ] ; then
         ssh_exec "
@@ -172,29 +167,30 @@ start_vm() {
             else
                 onevm resume $SELECTED_VM
             fi
-        " 'Resuming VM...'
+        "
     fi
 }
 
 stop_vm() {
     if [ "$NO_SUSPEND" != true ] ; then
-        ssh_exec "onevm suspend $SELECTED_VM" 'Suspending VM...'
+        ssh_exec "onevm suspend $SELECTED_VM"
     fi
 }
 
-get_vminfo() {
-    ssh_exec 'VMINFO' "onevm show $SELECTED_VM --xml" 'Getting VM address...'
-}
-
-connect_vm() {
+wait_vm() {
     # wait for LCM_STATE == 3, and connect
     ssh_exec 'VMINFO' '
         get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*"
         until [ "`eval $get_state`" == "3" ] ; do
             sleep 1
         done
-    ' 'Waiting for connect state...'
-    get_vminfo
+    '
+}
+
+
+get_vminfo() {
+
+    ssh_exec 'VMINFO' "onevm show $SELECTED_VM --xml"
 
     HOST=`echo $VMINFO | grep -Po '(?<=\<HOSTNAME\>)[0-9a-zA-Z-_.]*(?=\</HOSTNAME\>)' | head -n1`
     PORT=`echo $VMINFO | grep -Po '(?<=\<PORT\>\<!\[CDATA\[)[0-9]*(?=\]\]\>\</PORT\>)' | head -n1`
@@ -205,6 +201,9 @@ connect_vm() {
         NAME=`echo $NAME | recode html..utf8`
     fi
 
+}
+
+connect_vm() {
     VV_FILE=$(mktemp --suffix=.vv ${TEMPDIR}/vm-XXXXX)
     cat > $VV_FILE <<EOF
 [virt-viewer]
@@ -230,7 +229,31 @@ EOF
 loadkeys $@
 ssh_login
 trap ssh_logout EXIT INT
+get_vmlist 1>&1 2>&2 >(zenity --title=$TITLE --text='Getting VMs list...' --progress --pulsate --auto-close --width=200 --title="$TITLE")
 select_vm
-start_vm
-connect_vm
-stop_vm
+
+FIFO="$(mktemp -u ${TEMPDIR}/progress-XXXXX)"
+mkfifo "$FIFO"
+exec 3<> $FIFO;
+
+(cat $FIFO | zenity --progress --auto-close --width=200 --title="$TITLE" ) &
+
+echo -e "20" >&3
+echo -e "# Resuming VM..." >&3
+start_vm 
+
+echo -e "50" >&3
+echo -e "# Waiting for operable state..." >&3
+wait_vm 
+
+echo -e "90" >&3
+echo -e "# Getting VM address..." >&3
+get_vminfo 
+
+echo -e "100" >&3
+echo -e "# Connecting VM..." >&3
+
+rm -f $FIFO
+connect_vm 
+
+stop_vm 1>&1 2>&2 >(zenity --title=$TITLE --text='Suspending VM...' --progress --pulsate --auto-close --width=200 --title="$TITLE")
