@@ -232,26 +232,23 @@ trap ssh_logout EXIT INT
 get_vmlist 1>&1 2>&2 >(zenity --title=$TITLE --text='Getting VMs list...' --progress --pulsate --auto-close --width=200 --title="$TITLE")
 select_vm
 
-PROGRESS_FILE="$(mktemp ${TEMPDIR}/progress-XXXXX)"
-
-(tail -f $PROGRESS_FILE | zenity --progress --auto-close --width=200 --title="$TITLE" ) &
-
-echo -e "20" >> $PROGRESS_FILE
-echo -e "# Resuming VM..." >> $PROGRESS_FILE
+(
+echo -e "20"
+echo -e "# Resuming VM..."
 start_vm 
 
-echo -e "50" >> $PROGRESS_FILE
-echo -e "# Waiting for operable state..." >> $PROGRESS_FILE
+echo -e "50"
+echo -e "# Waiting for operable state..."
 wait_vm 
 
-echo -e "90" >> $PROGRESS_FILE
-echo -e "# Getting VM address..." >> $PROGRESS_FILE
+echo -e "90"
+echo -e "# Getting VM address..."
 get_vminfo 
 
-echo -e "100" >> $PROGRESS_FILE
-echo -e "# Connecting VM..." >> $PROGRESS_FILE
-
-rm -f $PROGRESS_FILE
+echo -e "100"
+echo -e "# Connecting VM..."
 connect_vm 
+
+) | tee >(zenity --progress --auto-close --width=200 --title="$TITLE" )
 
 stop_vm 1>&1 2>&2 >(zenity --title=$TITLE --text='Suspending VM...' --progress --pulsate --auto-close --width=200 --title="$TITLE")
