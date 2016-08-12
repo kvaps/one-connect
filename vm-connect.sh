@@ -232,28 +232,26 @@ trap ssh_logout EXIT INT
 get_vmlist 1>&1 2>&2 >(zenity --title=$TITLE --text='Getting VMs list...' --progress --pulsate --auto-close --width=200 --title="$TITLE")
 select_vm
 
-FIFO="$(mktemp -u ${TEMPDIR}/progress-XXXXX)"
-mkfifo "$FIFO"
-exec 3<> $FIFO;
+PROGRESS_FILE="$(mktemp ${TEMPDIR}/progress-XXXXX)"
 
-(cat $FIFO | zenity --progress --auto-close --width=200 --title="$TITLE" ) &
+(tail -f $PROGRESS_FILE | zenity --progress --auto-close --width=200 --title="$TITLE" ) &
 
-echo -e "20" >&3
-echo -e "# Resuming VM..." >&3
+echo -e "20" >> $PROGRESS_FILE
+echo -e "# Resuming VM..." >> $PROGRESS_FILE
 start_vm 
 
-echo -e "50" >&3
-echo -e "# Waiting for operable state..." >&3
+echo -e "50" >> $PROGRESS_FILE
+echo -e "# Waiting for operable state..." >> $PROGRESS_FILE
 wait_vm 
 
-echo -e "90" >&3
-echo -e "# Getting VM address..." >&3
+echo -e "90" >> $PROGRESS_FILE
+echo -e "# Getting VM address..." >> $PROGRESS_FILE
 get_vminfo 
 
-echo -e "100" >&3
-echo -e "# Connecting VM..." >&3
+echo -e "100" >> $PROGRESS_FILE
+echo -e "# Connecting VM..." >> $PROGRESS_FILE
 
-rm -f $FIFO
+rm -f $PROGRESS_FILE
 connect_vm 
 
 stop_vm 1>&1 2>&2 >(zenity --title=$TITLE --text='Suspending VM...' --progress --pulsate --auto-close --width=200 --title="$TITLE")
