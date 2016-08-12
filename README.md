@@ -6,6 +6,8 @@ No Sunstone needed, connecting carried directly from user's desktop.
 
 Script automatically suspend VM after disconnect and resume VM when user connect.
 
+It allows you to organize simplest VDI structure.
+
 ## Usage
 
 ```bash
