@@ -192,11 +192,11 @@ get_vminfo() {
 
     ssh_exec 'VMINFO' "onevm show $SELECTED_VM --xml"
 
-    HOST=`echo $VMINFO | grep -Po '(?<=\<HOSTNAME\>)[0-9a-zA-Z-_.]*(?=\</HOSTNAME\>)' | head -n1`
-    PORT=`echo $VMINFO | grep -Po '(?<=\<PORT\>\<!\[CDATA\[)[0-9]*(?=\]\]\>\</PORT\>)' | head -n1`
-    PASSWD=`echo $VMINFO | grep -Po '(?<=\<PASSWD\>\<!\[CDATA\[).*(?=\]\]\>\</PASSWD\>)' | head -n1`
-    TYPE=`echo $VMINFO | grep -Po '(?<=\<TYPE\>\<!\[CDATA\[)(vnc|spice|VNC|SPICE)(?=\]\]\>\</TYPE\>)' | head -n1`
-    NAME=`echo $VMINFO | grep -Po '(?<=\<NAME\>).*(?=\</NAME\>)' | head -n1`
+    HOST=`echo $VMINFO | grep -Po '(?<=\<HOSTNAME\>)[0-9a-zA-Z-_.]*(?=\</HOSTNAME\>)' | tail -n1`
+    PORT=`echo $VMINFO | grep -Po '(?<=\<PORT\>\<!\[CDATA\[)[0-9]*(?=\]\]\>\</PORT\>)' | tail -n1`
+    PASSWD=`echo $VMINFO | grep -Po '(?<=\<PASSWD\>\<!\[CDATA\[).*(?=\]\]\>\</PASSWD\>)' | tail -n1`
+    TYPE=`echo $VMINFO | grep -Po '(?<=\<TYPE\>\<!\[CDATA\[)(vnc|spice|VNC|SPICE)(?=\]\]\>\</TYPE\>)' | tail -n1`
+    NAME=`echo $VMINFO | grep -Po '(?<=\<NAME\>).*(?=\</NAME\>)' | tail -n1`
     if which recode >/dev/null; then
         NAME=`echo $NAME | recode html..utf8`
     fi
