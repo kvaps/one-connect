@@ -47,7 +47,6 @@ loadkeys() {
         -n | --no-suspend ) NO_SUSPEND=true; shift ;;
         -H | --host       ) SSH_HOST="$2"; shift ; shift ;;
         -u | --user       ) SSH_USER="$2"; shift ; shift ;;
-        -u | --user       ) SSH_USER="$2"; shift ; shift ;;
         -k | --key-file   ) KEY_FILE="$2"; shift ; shift ;;
         -l | --log-file   ) LOG_FILE="$2"; shift ; shift ;;
         -- ) shift; break ;;
@@ -226,7 +225,7 @@ EOF
     remote-viewer "$VV_FILE"
 }
 
-loadkeys $@
+loadkeys "$@"
 ssh_login
 trap ssh_logout EXIT INT
 get_vmlist 1>&1 2>&2 >(zenity --title=$TITLE --text='Getting VMs list...' --progress --pulsate --auto-close --width=200 --title="$TITLE")
