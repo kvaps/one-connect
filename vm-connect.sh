@@ -225,9 +225,14 @@ EOF
     remote-viewer "$VV_FILE"
 }
 
+cleanup() {
+    stop_vm 1>&1 2>&2 >(zenity --title=$TITLE --text='Suspending VM...' --progress --pulsate --auto-close --auto-kill --width=200 --title="$TITLE")
+    ssh_logout
+}
+
 loadkeys "$@"
 ssh_login
-trap ssh_logout EXIT INT
+trap cleanup EXIT INT
 get_vmlist 1>&1 2>&2 >(zenity --title=$TITLE --text='Getting VMs list...' --progress --pulsate --auto-close --width=200 --title="$TITLE")
 select_vm
 
@@ -248,5 +253,3 @@ select_vm
     echo -e "# Connecting VM..."
     connect_vm
 ) | tee >(zenity --progress --auto-close --auto-kill --width=200 --title="$TITLE" )
-
-stop_vm 1>&1 2>&2 >(zenity --title=$TITLE --text='Suspending VM...' --progress --pulsate --auto-close --width=200 --title="$TITLE")
