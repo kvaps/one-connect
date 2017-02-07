@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 
 usage() {
       echo "Usage:    vm-connect.sh --host HOST [--username USERNAME]"
@@ -66,9 +66,19 @@ ssh_login() {
 
     eval `ssh-agent`
 
-    if grep -q 'ENCRYPTED' "$KEY_FILE"; then
-        install -vm700 <(echo "zenity --entry --title 'SSH Authentication' --text='Enter password:' --hide-text") "$SSH_ASKPASS_SCRIPT"
-        cat $KEY_FILE | ssh-add -
+    # Ask password
+    install -vm700 <(echo "zenity --entry --title 'SSH Authentication' --text='Enter password:' --hide-text") "$SSH_ASKPASS_SCRIPT"
+
+    # Use KEY_FILE
+    if [ -f "$KEY_FILE" ]; then
+        if grep -q 'ENCRYPTED' "$KEY_FILE"; then
+            cat "$KEY_FILE" | ssh-add -
+        else
+            ssh-add "$KEY_FILE"
+        fi
+    else
+        error "SSH key-file is not found"
+        exit 1
     fi
 
     rm -f "$SSH_ASKPASS_SCRIPT"
