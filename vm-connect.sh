@@ -58,24 +58,19 @@ loadkeys() {
     if [ -z "$SSH_HOST" ] ; then error "Host address is not set" break; exit 1; fi
 }
 
-
-create_sshask_script(){
-   cat > "$1" <<EOF
-#!/bin/sh
-prompt=\$(echo \$1 | sed s/_/__/g)
-zenity --entry --title "ssh(1) Authentication" --text="\$prompt" --hide-text
-EOF
-    chmod u+x "$1"
-}
-
 ssh_login() {
     # Create SSH_ASKPASS script
     SSH_ASKPASS_SCRIPT="${TEMPDIR}/ssh-askpass.sh"
-    create_sshask_script $SSH_ASKPASS_SCRIPT
-    export SSH_ASKPASS=$SSH_ASKPASS_SCRIPT
+    export SSH_ASKPASS="$SSH_ASKPASS_SCRIPT"
+    KEY_FILE="${KEY_FILE-$HOME/.ssh/id_rsa}"
 
     eval `ssh-agent`
-    echo | setsid ssh-add $KEY_FILE
+
+    if grep -q 'ENCRYPTED' "$KEY_FILE"; then
+        install -vm700 <(echo "zenity --entry --title 'SSH Authentication' --text='Enter password:' --hide-text") "$SSH_ASKPASS_SCRIPT"
+        cat $KEY_FILE | ssh-add -
+    fi
+
     rm -f "$SSH_ASKPASS_SCRIPT"
 }
 
