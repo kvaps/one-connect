@@ -75,7 +75,7 @@ ssh_login() {
     export SSH_ASKPASS=$SSH_ASKPASS_SCRIPT
 
     eval `ssh-agent`
-    echo | setsid ssh-add $KEY_FILE
+    echo | ssh-add $KEY_FILE
     rm -f "$SSH_ASKPASS_SCRIPT"
 }
 
