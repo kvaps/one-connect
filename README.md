@@ -26,7 +26,7 @@ Arguments:
 * Install [dependings](#dependings)
 * Configure passwordless SSH authentication to your OpenNebula host.
 * Authorise user on OpenNebula host via `oneuser login` command.
-* Also you may to configure [SSH Auth](http://docs.opennebula.org/4.12/administration/authentication/ssh_auth.html)
+* Also you may to configure [SSH Auth](https://docs.opennebula.org/5.2/deployment/authentication_setup/ssh_auth.html)
 
 ## Dependings
 
@@ -49,7 +49,7 @@ Also, don't forget to add virt-viewer bin folder to your windows PATH [[howto](h
 
 The simple way. Just install:
 
-* **Git Bash** (with adding unix tools to PATH)
+* **Git Bash**
   [[windows binary](https://git-for-windows.github.io/)]
 
 * **Zenity**
@@ -59,8 +59,8 @@ The simple way. Just install:
 
 Create shortcut for start vm-connect script:
 
-    mintty.exe -w hide -e bash -c "C:\Soft\one-connect\vm-connect.sh" -H hostname -u user
+    git-bash.exe -w hide -e bash -c "C:\Soft\one-connect\vm-connect.sh" -H hostname -u user
 
 Or for enable debug output:
 
-    mintty.exe -e bash -c "C:\Soft\one-connect\vm-connect.sh" -d -H hostname -u user
+    git-bash.exe -e bash -c "C:\Soft\one-connect\vm-connect.sh" -d -H hostname -u user
