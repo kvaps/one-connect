@@ -150,6 +150,7 @@ select_vm() {
 start_vm() {
     debug "start vm"
     #wait for LCM_STATE == 0 or 3, and write it to variable
+    trap 'stop_vm_gui; ssh_logout' EXIT INT
     ssh_exec 'LCM_STATE' '
         get_state="onevm show '$SELECTED_VM' --xml | grep --color=never -o \<LCM_STATE\>[0-9]*\<\/LCM_STATE\> | grep -oP [0-9]*"
         until [ "`eval $get_state`" == "0" ] || [ "`eval $get_state`" == "3" ] ; do
@@ -225,14 +226,13 @@ EOF
     remote-viewer "$VV_FILE"
 }
 
-cleanup() {
+stop_vm_gui() {
     stop_vm 1>&1 2>&2 >(zenity --title=$TITLE --text='Suspending VM...' --progress --pulsate --auto-close --auto-kill --width=200 --title="$TITLE")
-    ssh_logout
 }
 
 loadkeys "$@"
 ssh_login
-trap cleanup EXIT INT
+trap 'ssh_logout' EXIT INT
 get_vmlist 1>&1 2>&2 >(zenity --title=$TITLE --text='Getting VMs list...' --progress --pulsate --auto-close --width=200 --title="$TITLE")
 select_vm
 
