@@ -49,7 +49,7 @@ Also, don't forget to add virt-viewer bin folder to your windows PATH [[howto](h
 
 The simple way. Just install:
 
-* **Git Bash**
+* **Git Bash** (or cygwin with openssh)
   [[windows binary](https://git-for-windows.github.io/)]
 
 * **Zenity**
