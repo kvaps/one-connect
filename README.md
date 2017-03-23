@@ -63,4 +63,4 @@ Create shortcut for start vm-connect script:
 
 Or for enable debug output:
 
-    "C:\Program Files\Git\usr\bin\mintty.exe" -w hide -e bash -c "C:/Soft/one-connect/vm-connect.sh -H hostname -u user"
+    "C:\Program Files\Git\usr\bin\mintty.exe" -e bash -c "C:/Soft/one-connect/vm-connect.sh -d -H hostname -u user"
